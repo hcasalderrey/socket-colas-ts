@@ -8,7 +8,7 @@ export class TicketService {
         private readonly wssServive = WssService.instance
     ){}
 
-    public readonly tickets:Ticket[] = [
+    public tickets:Ticket[] = [
         { id: UuidAdapter.v4(), number:1, createdAt: new Date(), done: false },
         { id: UuidAdapter.v4(), number:2, createdAt: new Date(), done: false },
         { id: UuidAdapter.v4(), number:3, createdAt: new Date(), done: false },
@@ -28,7 +28,7 @@ export class TicketService {
 
 
     public get lastWorkingOnTicket():Ticket[]{
-        return this.workingOnTickets.splice(0,4)
+        return this.workingOnTickets.slice(0,4)
         
     }
     public get lastTicketNumber():number {
@@ -48,10 +48,9 @@ export class TicketService {
         };
 
         this.tickets.push(ticket);
-
-          // TODO: ENVIAR MENSAJE A WS
+ 
         
-        this.onTicketNumberChange()
+        this.onTicketNumberChanged()
 
 
         return ticket
@@ -67,7 +66,9 @@ export class TicketService {
 
         this.workingOnTickets.unshift({...ticket})
 
-        // TODO: ENVIAR MENSAJE A WS
+        this.onTicketNumberChanged()
+        
+        this.onWorkingOnChanged();
 
         return {status: 'ok', ticket}
     }
@@ -82,9 +83,9 @@ export class TicketService {
 
         //return {status: 'ok', ticket}
 
+        
 
-
-        this.tickets.map( ticket =>{
+        this.tickets= this.tickets.map( ticket =>{
             if(ticket.id === ticketId) {
                 ticket.done = true
             } 
@@ -94,8 +95,11 @@ export class TicketService {
 
     }
 
-    private onTicketNumberChange() {
+    private onTicketNumberChanged() {
         this.wssServive.sendMessage('on-ticket-count-changed',this.pendingTickets.length)
+    }
+    private onWorkingOnChanged() {
+        this.wssServive.sendMessage('on-working-changed',[...this.lastWorkingOnTicket])
     }
 
 
